@@ -189,7 +189,7 @@ def makeData(f_X, f_y):
                 print(s)
     return X,y
 
-X,y = makeData('audios_record.txt','genres_record.txt')
+X,y = makeData('data/audios_record.txt','data/genres_record.txt')
 for i in range(len(X)):
     ii = X[i]
     if not len(ii)==1600:

@@ -60,7 +60,7 @@ def makeArousalModel():
     return arousal_model
 
 def trainAndTest(filename, model):
-    X,y = makeData('audios_record.txt',filename)
+    X,y = makeData('data/audios_record.txt',filename)
     testing_size = int(len(X)*0.2)
     training_size = len(X) - testing_size
     trainX, testX, trainY, testY = train_test_split(X,y,test_size=testing_size,train_size=training_size)

@@ -111,5 +111,5 @@ def read_csv(filename, type, restrict = 2000):
 #print(genMFCC('fortest.wav'))
 #print(getName('fortest3.wav')['status']['msg'])
 #getNames(len)
-read_csv('arousal.csv','arousal')
-read_csv('valence.csv','valence')
+read_csv('data/arousal.csv','arousal')
+read_csv('data/valence.csv','valence')
