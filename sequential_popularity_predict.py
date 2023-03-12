@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 # Load the data
 # TODO: replace 'valence-arousal.csv' with valence and arousal predictions
 data = pd.read_csv('data/csv/valence-arousal.csv') 
+
 X = data[['valence', 'arousal']].values
 y = data['popularity'].values
 
@@ -29,12 +30,12 @@ model.compile(optimizer='adam', loss='mse')
 model.fit(X_train, y_train, epochs=100, validation_split=0.2)
 
 # Save the model
-model.save('data/models/popularity_model.h5') # replace 'popularity_model.h5' with your desired filename
+# model.save('data/models/popularity_model.h5')
 
 ### Testing ###
 
 # Load the model
-model = tf.keras.models.load_model('data/models/popularity_model.h5')
+# model = tf.keras.models.load_model('data/models/popularity_model.h5')
 
 # Evaluate the model on the testing set
 mse, _ = model.evaluate(X_test, y_test)
