@@ -1,3 +1,4 @@
+"""Valence and Arousal Prediction EECS448-RALL."""
 import random
 
 import keras

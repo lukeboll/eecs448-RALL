@@ -1,3 +1,4 @@
+"""Audio Processing EECS448-RALL."""
 import csv
 import os
 import subprocess
@@ -23,6 +24,7 @@ from sklearn import preprocessing
 
 
 def genMFCC(filepath):
+    """Generate MFCC features."""
     samplerate, signal = read(filepath)
     mfcc_features = mfcc(signal,
                          samplerate,
@@ -35,6 +37,7 @@ def genMFCC(filepath):
 
 
 def splitAudio(filepath, id, t1, t2):
+    """Split audio into wav format."""
     newAudio = AudioSegment.from_wav(filepath)
     newAudio = newAudio[t1:t2]
     # Exports to a wav file in the current path.
@@ -42,11 +45,13 @@ def splitAudio(filepath, id, t1, t2):
 
 
 def loadAudio(filepath):
+    """Load audio. TODO: make global var"""
     newAudio = AudioSegment.from_wav(filepath)
     print("Done!")
 
 
 def getName(filename):
+    """Get audio name."""
     config = {
         "key": "7dcf14702f55380d375bd9c62904bb1a",
         "secret": "m00m5kbIXvPxaupxYfFu8MWtPrqeUZMKbnwyLFt3",
@@ -59,6 +64,7 @@ def getName(filename):
 
 
 def getNames(len=2000):
+    """Get audio names."""
     with open('data/DEAM_names.csv', 'w', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['artist', 'genre', 'spotify_id'])

@@ -1,4 +1,4 @@
-# Importing all the necessary packages
+"""Genre Prediction EECS448-RALL."""
 import csv
 import os
 
