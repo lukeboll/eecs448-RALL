@@ -7,6 +7,7 @@ librosa
 matplotlib
 nltk
 numpy
+pandas
 pydub
 python_speech_features
 requests
@@ -16,3 +17,4 @@ torch
 torchaudio
 transformers
 tqdm
+tensorflow

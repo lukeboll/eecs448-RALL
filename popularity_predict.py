@@ -1,45 +1,53 @@
-"""Popularity Prediction EECS448-RALL."""
-import random
-import numpy as np
+import tensorflow as tf
+import pandas as pd
 from sklearn.model_selection import train_test_split
-from keras.models import Sequential
-from keras.layers import Conv1D, Dense, Dropout
 
-random.seed(6161)
+### Data Preprocessing ###
 
-# Parameters
-DATA_LEN = 1600
-DATA_WIDTH = 942
-STEP = 100
-DROPOUT_RATE = 0.25
-RESOURCE_BARRIER = 200
+# Load the data
+# TODO: replace 'valence-arousal.csv' with valence and arousal predictions
+data = pd.read_csv('data/csv/valence-arousal.csv') 
+X = data[['valence', 'arousal']].values
+y = data['popularity'].values
 
-# Functions
-def make_data(f_X, f_y):
-    X = []
-    y = []
-    with open(f_X, 'r', encoding='utf-8') as fx, open(f_y, 'r', encoding='utf-8') as fy:
-        for s in fx.readlines()[1:]:
-            if s[0] == 'A':
-                X.append(list(map(float, sav)))
-                sav = []
-            else:
-                sav.append(float(s))
-        for s in fy:
-            y.append(float(s))
-    return X, y
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=485)
 
-def make_popularity_model():
-    model = Sequential()
-    data_len = DATA_LEN
-    cnt = STEP
-    while cnt < data_len and data_len - cnt >= RESOURCE_BARRIER:
-        model.add(Conv1D(data_len-cnt, kernel_size=cnt, activation='relu'))
-        data_len = int(data_len*(1-DROPOUT_RATE))
-        cnt += STEP
-    model.add(Conv1D(1, kernel_size=cnt-STEP, activation='relu'))
-    model.build(input_shape=(DATA_WIDTH, DATA_LEN, 1))
-    return model
+### Build Model ###
 
-# Main
-popularity_model = make_popularity_model()
+# Define the model
+model = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(32, activation='relu', input_shape=(2,)),
+    tf.keras.layers.Dense(16, activation='relu'),
+    tf.keras.layers.Dense(1, activation='linear')
+])
+
+# Compile the model
+model.compile(optimizer='adam', loss='mse')
+
+# Train the model
+model.fit(X_train, y_train, epochs=100, validation_split=0.2)
+
+# Save the model
+model.save('data/models/popularity_model.h5') # replace 'popularity_model.h5' with your desired filename
+
+### Testing ###
+
+# Load the model
+model = tf.keras.models.load_model('data/models/popularity_model.h5')
+
+# Evaluate the model on the testing set
+mse, _ = model.evaluate(X_test, y_test)
+
+# Print the mean squared error
+print("Mean Squared Error:", mse)
+
+# Generate some test data
+test_data = pd.DataFrame({'valence': [0.6, 0.2, 0.8], 'arousal': [0.4, 0.9, 0.5]})
+X_test = test_data.values
+
+# Make predictions
+y_pred = model.predict(X_test)
+
+# Print the predictions
+print("Predictions:", y_pred)

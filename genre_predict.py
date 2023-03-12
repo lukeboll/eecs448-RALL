@@ -135,17 +135,17 @@ def helper_analyze_data(data):
 
 
 '''
-raw_testing_data = getTesting('data/DEAM_names.csv')
+raw_testing_data = getTesting('data/csv/DEAM_names.csv')
 print(helperAnalyzeData(raw_testing_data))
 audios, genres, id = genTrainData(raw_testing_data, data_len = full_data_len)
 '''
 '''
-with open('data/genres_record.txt', 'w',encoding='utf-8') as f:
+with open('data/records/genres_record.txt', 'w',encoding='utf-8') as f:
     for k in genres:
         f.write(k+'\n')
 '''
 '''
-with open('data/audios_record.txt', 'w',encoding='utf-8') as ff:
+with open('data/records/audios_record.txt', 'w',encoding='utf-8') as ff:
     cnt = 0
     for a in audios:
         ff.write('AUD '+str(cnt)+'\n')
@@ -153,7 +153,7 @@ with open('data/audios_record.txt', 'w',encoding='utf-8') as ff:
             ff.write(str(dat)+'\n')
         cnt += 1
     ff.write('AUD END')
-with open('data/id_record.txt', 'w',encoding='utf-8') as f:
+with open('data/records/id_record.txt', 'w',encoding='utf-8') as f:
     for k in id:
         f.write(str(k)+'\n')
 '''
@@ -208,7 +208,7 @@ def make_data(f_X, f_y):
     return X, y
 
 
-X, y = make_data('data/audios_record.txt', 'data/genres_record.txt')
+X, y = make_data('data/records/audios_record.txt', 'data/records/genres_record.txt')
 for i in range(len(X)):
     ii = X[i]
     if not len(ii) == 1600:

@@ -70,7 +70,7 @@ def make_arousal_model():
 
 
 def train_and_test(filename, model):
-    X, y = make_data('data/audios_record.txt', filename)
+    X, y = make_data('data/records/audios_record.txt', filename)
     testing_size = int(len(X)*0.2)
     training_size = len(X) - testing_size
     trainX, testX, trainY, testY = train_test_split(
@@ -87,5 +87,5 @@ def train_and_test(filename, model):
 valence_model = make_valence_model()
 arousal_model = make_arousal_model()
 
-train_and_test('data/arousal.txt', arousal_model)
-train_and_test('data/valence.txt', valence_model)
+train_and_test('data/models/arousal.txt', arousal_model)
+train_and_test('data/models/valence.txt', valence_model)

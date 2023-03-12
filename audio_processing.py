@@ -65,7 +65,7 @@ def getName(filename):
 
 def getNames(len=2000):
     """Get audio names."""
-    with open('data/DEAM_names.csv', 'w', encoding='utf-8') as f:
+    with open('data/csv/DEAM_names.csv', 'w', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['artist', 'genre', 'spotify_id'])
         for i in range(2, len):
@@ -98,7 +98,7 @@ def str_to_val(s):
 def read_csv(filename, type, restrict=2000):
     cnt = 0
     all_set = []
-    with open('data/id_record.txt', 'r', encoding='utf-8') as f0:
+    with open('data/records/id_record.txt', 'r', encoding='utf-8') as f0:
         for ord in f0:
             all_set.append(int(ord))
     with open(type+'.txt', 'w', encoding='utf-8') as f:
@@ -133,5 +133,5 @@ def read_csv(filename, type, restrict=2000):
 # print(genMFCC('fortest.wav'))
 # print(getName('fortest3.wav')['status']['msg'])
 # getNames(len)
-read_csv('data/arousal.csv', 'arousal')
-read_csv('data/valence.csv', 'valence')
+read_csv('data/csv/arousal.csv', 'arousal')
+read_csv('data/csv/valence.csv', 'valence')
