@@ -87,4 +87,4 @@ valence_model = make_valence_model()
 arousal_model = make_arousal_model()
 
 train_and_test('data/arousal.txt', arousal_model)
-train_and_test('data/valence.txt', arousal_model)
+train_and_test('data/valence.txt', valence_model)
