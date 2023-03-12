@@ -5,11 +5,25 @@ from sklearn.model_selection import train_test_split
 ### Data Preprocessing ###
 
 # Load the data
-# TODO: replace 'valence-arousal.csv' with valence and arousal predictions
-data = pd.read_csv('data/csv/valence-arousal.csv') 
+valence_arousal_data = pd.read_csv('data/csv/muse_v3.csv', header=0)
+valence_arousal_data = valence_arousal_data[['track', 'valence_tags', 'arousal_tags']]
+valence_arousal_data = valence_arousal_data[valence_arousal_data['track'].notnull()]
+valence_arousal_data = valence_arousal_data[valence_arousal_data['valence_tags'].notnull()]
+valence_arousal_data = valence_arousal_data[valence_arousal_data['arousal_tags'].notnull()]
 
-X = data[['valence', 'arousal']].values
-y = data['popularity'].values
+spotify_data = pd.read_csv('data/csv/song_data.csv', header=0)
+spotify_data = spotify_data[['song_name', 'song_popularity']]
+
+merged_df = pd.merge(valence_arousal_data, spotify_data, left_on='track', right_on='song_name', how='inner')
+merged_df.drop('song_name', axis=1, inplace=True)
+merged_df = merged_df.drop_duplicates(subset=['track'])
+merged_df.drop('track', axis=1, inplace=True)
+merged_df = merged_df.rename(columns={'valence_tags': 'valence', 'arousal_tags': 'arousal' , 'song_popularity': 'popularity'})
+
+print(merged_df)
+ 
+X = merged_df[['valence', 'arousal']].values
+y = merged_df['popularity'].values
 
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=485)
