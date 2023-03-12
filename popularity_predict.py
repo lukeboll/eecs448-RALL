@@ -41,16 +41,5 @@ def make_popularity_model():
     model.build(input_shape=(DATA_WIDTH, DATA_LEN, 1))
     return model
 
-def train_and_test(filename, model):
-    X, y = make_data('data/audios_record.txt', filename)
-    trainX, testX, trainY, testY = train_test_split(X, y, test_size=0.2)
-
-    model.compile(loss='mae', optimizer='adam', metrics=['accuracy'])
-    model.fit(trainX, trainY)
-    score = model.evaluate(testX, testY, verbose=0)
-    print("Train accuracy:", score[0])
-    print("Test accuracy:", score[1])
-
 # Main
 popularity_model = make_popularity_model()
-train_and_test('data/popularity.txt', popularity_model)
