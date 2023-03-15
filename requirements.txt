@@ -12,7 +12,7 @@ pydub
 python_speech_features
 requests
 scipy
-sklearn
+scikit-learn
 torch
 torchaudio
 transformers
