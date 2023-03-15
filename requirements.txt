@@ -1,4 +1,5 @@
 acrcloud
+bert-tensorflow
 ffmpeg
 fuzzywuzzy
 gradio
@@ -16,6 +17,10 @@ requests
 scipy
 seaborn
 sklearn
+tensorflow
+tensorflow_hub
+tensorflow_text
+tf-models-official
 torch
 torchaudio
 transformers
