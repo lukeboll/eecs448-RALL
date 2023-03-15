@@ -15,6 +15,7 @@ pydub
 python_speech_features
 requests
 scipy
+scikit-learn
 seaborn
 sklearn
 tensorflow
