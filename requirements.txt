@@ -1,10 +1,12 @@
 acrcloud
 ffmpeg
+fuzzywuzzy
 gradio
 IPython
 keras
 librosa
 matplotlib
+multiprocessing
 nltk
 numpy
 pandas
@@ -12,6 +14,7 @@ pydub
 python_speech_features
 requests
 scipy
+seaborn
 sklearn
 torch
 torchaudio
