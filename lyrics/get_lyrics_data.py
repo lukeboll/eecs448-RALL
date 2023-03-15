@@ -1,54 +1,50 @@
+# Common libraries
 import pandas as pd
-import glob
-from tqdm import tqdm
-from fuzzywuzzy import fuzz
-from fuzzywuzzy import process
-from multiprocessing import Pool, cpu_count
+import numpy as np
+from sklearn.model_selection import KFold, GridSearchCV, train_test_split 
+import matplotlib.pyplot as plt
 
-# use glob to get all the csv files in the folder
-folder_path = '../data/csv/azlyrics-scraper'
-csv_files = glob.glob(folder_path + "/*.csv")
+# Linear regression Question libraries
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
 
-data_frames = []
-for file in csv_files:
-    df = pd.read_csv(file, error_bad_lines=False)
-    data_frames.append(df)
 
-lyrics = pd.concat(data_frames, ignore_index=True)
+# Logistic Regression Question Libraries
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.metrics import mean_squared_error
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import sent_tokenize, word_tokenize
+import seaborn as sns
 
-# Load the second data frame with song titles and artist
-df2 = pd.read_csv("../prediction_dataset.csv")
+nltk.download('punkt')
+nltk.download('stopwords')
 
-# Define a function to perform fuzzy matching on song titles and artist names
-def fuzzy_match(title1, artist1, title2, artist2):
-    # First, compare the artist names
-    artist_score = fuzz.token_set_ratio(artist1.lower(), artist2.lower())
-    # If the artist names match, compare the song titles
-    if artist_score > 80:
-        title_score = fuzz.token_set_ratio(title1.lower(), title2.lower())
-        if title_score > 80:
-            return True
-    return False
+# Reading in the Spotify Data and conducting pre-processing
+df = pd.read_csv('spotify_songs.csv')
 
-# Add a column to df2 to store the matched lyrics
-df2["Lyrics"] = ""
+new_df = pd.DataFrame({
+    'text': df.loc[:, 'lyrics'],
+    'spotify_id': df.loc[:, 'track_id']
+})
 
-# Define a function to match lyrics for a single row
-def match_lyrics(row):
-    for index, row2 in lyrics.iterrows():
-        if fuzzy_match(str(row2["SONG_NAME"]), str(row2["ARTIST_NAME"]), str(row["name"]), str(row["artists"])):
-            # If there is a match, copy the lyrics to df2
-            return row2["LYRICS"]
-    return ""
+nltk_stopwords = set(stopwords.words('english'))
 
-# Use multiprocessing to match lyrics for all rows in df2
-def process_df2(df):
-    with Pool(cpu_count()) as p:
-        df["Lyrics"] = p.map(match_lyrics, df.to_dict("records"))
-    return df
+def PreprocessSentence(sentence, nltk_stopwords):
+    s = sentence.lower()
+    s = word_tokenize(s)
+    words = []
+    for w in s:
+        if w not in nltk_stopwords and len(w) > 1:
+            words.append(w)
+    return ' '.join(words)
 
-# Process df2 with multiprocessing
-df2 = process_df2(df2)
+def PreprocessData(new_df, nltk_stopwords):
+    # Input - the dataframe, with columns label and text
+    # output - the dataframe with the text processed as described earlier
+    new_df.dropna(subset=['text'], inplace=True)  # drop rows with missing values in the 'text' column
+    new_df.text = new_df.text.map(lambda x: PreprocessSentence(x, nltk_stopwords))
+    return new_df
 
-# Save the results to a new CSV file
-df2.to_csv("lyrical.csv", index=False)
+new_df = PreprocessData(new_df, nltk_stopwords)
