@@ -1,130 +1,72 @@
-import tensorflow as tf
-import tensorflow_hub as hub
 import pandas as pd
-from bert import tokenization
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-
-# Load pre-trained BERT model
-module_url = "https://tfhub.dev/google/bert_uncased_L-12_H-768_A-12/1"
-bert_layer = hub.KerasLayer(module_url, trainable=True, signature="tokens")
+import torch
+from transformers import BertTokenizer, BertForSequenceClassification
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 
 # Load data from CSV file
-data = pd.read_csv("spotify_songs.csv")
+df = pd.read_csv('spotify_songs.csv')
 
-# Split the DataFrame into train and test sets
-train_df, test_df = train_test_split(data, test_size=0.2, random_state=448)
+# drop NaN values
+df.dropna(inplace=True)
 
-# Define the tokenizer
-FullTokenizer = tokenization.FullTokenizer
+# reset the index
+df.reset_index(drop=True, inplace=True)
 
-vocab_file = bert_layer.resolved_object.vocab_file.asset_path.numpy() #The vocab file of bert for tokenizer
 
-do_lower_case = bert_layer.resolved_object.do_lower_case.numpy()
-tokenizer = FullTokenizer(vocab_file, do_lower_case) 
+# Initialize BERT tokenizer and model
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=1)
 
-# Tokenize the data
+# Set device to GPU if available
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model.to(device)
+
+# Tokenize input data and convert to PyTorch tensors
 input_ids = []
-input_masks = []
-segment_ids = []
+attention_masks = []
+labels = []
+for i in range(len(df)):
+    encoded_dict = tokenizer.encode_plus(df['lyrics'][i],
+                                          add_special_tokens=True,
+                                          max_length=128,
+                                          pad_to_max_length=True,
+                                          return_attention_mask=True,
+                                          return_tensors='pt')
+    input_ids.append(encoded_dict['input_ids'])
+    attention_masks.append(encoded_dict['attention_mask'])
+    labels.append(torch.tensor(df['track_popularity'][i], dtype=torch.float))
+input_ids = torch.cat(input_ids, dim=0)
+attention_masks = torch.cat(attention_masks, dim=0)
+labels = torch.stack(labels)
 
-for text in train_df["lyrics"]:
-    # Tokenize the text
-    tokens = tokenizer.tokenize(text)
+print("Data tokenized and converted")
+# Create dataset and dataloader
+dataset = TensorDataset(input_ids, attention_masks, labels)
+train_dataloader = DataLoader(dataset, sampler=RandomSampler(dataset), batch_size=32)
 
-    # Add [CLS] and [SEP] tokens
-    tokens = ["[CLS]"] + tokens + ["[SEP]"]
+# Set hyperparameters
+epochs = 4
+learning_rate = 2e-5
 
-    # Convert tokens to input IDs, input masks, and segment IDs
-    input_id = tokenizer.convert_tokens_to_ids(tokens)
-    input_mask = [1] * len(input_id)
-    segment_id = [0] * len(input_id)
+# Create optimizer and set learning rate
+optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
-    # Pad or truncate the input to a fixed length
-    max_seq_length = 128
-    if len(input_id) > max_seq_length:
-        input_id = input_id[:max_seq_length]
-        input_mask = input_mask[:max_seq_length]
-        segment_id = segment_id[:max_seq_length]
-    else:
-        padding = [0] * (max_seq_length - len(input_id))
-        input_id += padding
-        input_mask += padding
-        segment_id += padding
+print("Training has started")
+# Train BERT model
+for epoch in range(epochs):
+    print(f'Epoch {epoch + 1} of {epochs}')
+    model.train()
+    total_loss = 0
+    for step, batch in enumerate(train_dataloader):
+        batch = tuple(t.to(device) for t in batch)
+        input_ids, attention_mask, labels = batch
+        optimizer.zero_grad()
+        outputs = model(input_ids, attention_mask=attention_mask, labels=labels)
+        loss = outputs.loss
+        total_loss += loss.item()
+        loss.backward()
+        optimizer.step()
+    avg_loss = total_loss / len(train_dataloader)
+    print(f'Average training loss: {avg_loss}')
 
-    # Add the input IDs, input masks, and segment IDs to the lists
-    input_ids.append(input_id)
-    input_masks.append(input_mask)
-    segment_ids.append(segment_id)
-
-# Convert the lists to numpy arrays
-input_ids = np.array(input_ids)
-input_masks = np.array(input_masks)
-segment_ids = np.array(segment_ids)
-
-# Define the model
-input_ids_layer = tf.keras.layers.Input(shape=(max_seq_length,), dtype=tf.int32, name="input_ids")
-input_masks_layer = tf.keras.layers.Input(shape=(max_seq_length,), dtype=tf.int32, name="input_masks")
-segment_ids_layer = tf.keras.layers.Input(shape=(max_seq_length,), dtype=tf.int32, name="segment_ids")
-
-bert_output = bert_layer([input_ids_layer, input_masks_layer, segment_ids_layer])
-
-dropout_layer = tf.keras.layers.Dropout(0.2)(bert_output["pooled_output"])
-output_layer = tf.keras.layers.Dense(1, activation="linear")(dropout_layer)
-
-model = tf.keras.models.Model(inputs=[input_ids_layer, input_masks_layer, segment_ids_layer], outputs=output_layer)
-
-# Compile the model
-model.compile(optimizer=tf.keras.optimizers.Adam(lr=2e-5), loss="mean_squared_error", metrics=["mae"])
-
-# Train the model
-model.fit([input_ids, input_masks, segment_ids], train_df["track_popularity"], epochs=5, batch_size=32, validation_split=0.2)
-
-# Make predictions on new data
-new_input_ids = []
-new_input_masks = []
-new_segment_ids = []
-
-for text in test_df["lyrics"]:
-    # Tokenize the text
-    tokens = tokenizer.tokenize(text)
-
-    # Add [CLS] and [
-    tokens = ["[CLS]"] + tokens + ["[SEP]"]
-
-    # Convert tokens to input IDs, input masks, and segment IDs
-    input_id = tokenizer.convert_tokens_to_ids(tokens)
-    input_mask = [1] * len(input_id)
-    segment_id = [0] * len(input_id)
-
-    # Pad or truncate the input to a fixed length
-    max_seq_length = 128
-    if len(input_id) > max_seq_length:
-        input_id = input_id[:max_seq_length]
-        input_mask = input_mask[:max_seq_length]
-        segment_id = segment_id[:max_seq_length]
-    else:
-        padding = [0] * (max_seq_length - len(input_id))
-        input_id += padding
-        input_mask += padding
-        segment_id += padding
-
-    # Add the input IDs, input masks, and segment IDs to the lists
-    new_input_ids.append(input_id)
-    new_input_masks.append(input_mask)
-    new_segment_ids.append(segment_id)
-
-new_input_ids = np.array(new_input_ids)
-new_input_masks = np.array(new_input_masks)
-new_segment_ids = np.array(new_segment_ids)
-
-predictions = model.predict([new_input_ids, new_input_masks, new_segment_ids])
-predictions_train = model.predict([input_ids, input_masks, segment_ids])
-
-train_mse = mean_squared_error(train_df["track_popularity"], predictions_train)
-test_mse = mean_squared_error(test_df["track_popularity"], predictions)
-
-
-print(f"Training MSE: {train_mse}")
-print(f"Testing MSE: {test_mse}")
+torch.save(model.state_dict(), 'my_model.pth')
