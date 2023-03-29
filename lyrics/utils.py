@@ -56,7 +56,7 @@ def log_training(epoch, stats):
             print(f"\t{split} {metric}:{round(stats[-1][idx],4)}")
 
 
-def make_training_plot(name="NN Training"):
+def make_training_plot(name="BERT Training"):
     """Set up an interactive matplotlib graph to log metrics during training."""
     plt.ion()
     fig, axes = plt.subplots(1, 2, figsize=(20, 5))

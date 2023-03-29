@@ -185,7 +185,7 @@ def evaluate_epoch(
                     r2 = 1 - ss_res / ss_tot
                     return r2
         
-                r2.append(_r2_score(outputs, batch_labels).item())
+                running_r2.append(_r2_score(outputs, batch_labels).item())
 
         loss = np.mean(running_loss)
         r2 = np.mean(running_r2)
@@ -227,6 +227,7 @@ def train_epoch(data_loader, model, criterion, optimizer, device):
         loss = criterion(y_pred.squeeze(), batch_labels.squeeze())
 
         # backward pass
+        loss = loss.float() 
         loss.backward()
         clip_grad_norm(model.parameters(), 2)
         optimizer.step()

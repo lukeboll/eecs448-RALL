@@ -9,6 +9,7 @@ import torch.nn as nn
 from train_common import *
 from utils import config
 import utils
+import time
 
 
 # Read in the data
@@ -48,7 +49,7 @@ labels = df.label.to_numpy()[short_descriptions]
 test_size = 0.2
 seed = 448
 
-train_inputs, test_inputs, train_labels, test_labels = \
+train_inputs, test_inputs, old_train_labels, test_labels = \
             train_test_split(input_ids, labels, test_size=test_size, 
                              random_state=seed)
 train_masks, test_masks, _, _ = train_test_split(attention_mask, 
@@ -56,10 +57,10 @@ train_masks, test_masks, _, _ = train_test_split(attention_mask,
                                         random_state=seed)
 
 train_inputs, val_inputs, train_labels, val_labels = \
-            train_test_split(train_inputs, train_labels, test_size=test_size, 
+            train_test_split(train_inputs, old_train_labels, test_size=test_size, 
                              random_state=seed)
 train_masks, val_masks, _, _ = train_test_split(train_masks, 
-                                        train_labels, test_size=test_size, 
+                                        old_train_labels, test_size=test_size, 
                                         random_state=seed)
 
 # Standardize the target variable in training and validation
@@ -96,14 +97,14 @@ class BertRegressor(nn.Module):
         super(BertRegressor, self).__init__()
         D_in, D_out = 768, 1
         
-        self.camembert = \
-                   BertModel.from_pretrained('camembert-base')
+        self.bert = \
+                   BertModel.from_pretrained("bert-base-uncased")
         self.regressor = nn.Sequential(
             nn.Dropout(drop_rate),
             nn.Linear(D_in, D_out))
         
     def forward(self, input_ids, attention_masks):
-        outputs = self.camembert(input_ids, attention_masks)
+        outputs = self.bert(input_ids, attention_masks)
         class_label_output = outputs[1]
         outputs = self.regressor(class_label_output)
         return outputs
@@ -120,7 +121,7 @@ model.to(device)
 
 # Set Up the Criterion and Optimizer
 criterion = nn.MSELoss()
-optimizer = AdamW(model.parameters(),
+optimizer = torch.optim.AdamW(model.parameters(),
                   lr=5e-5,
                   eps=1e-8)
 
@@ -139,14 +140,16 @@ evaluate_epoch(
 )
 
 # initial val loss for early stopping
-global_min_loss = stats[0][1]
+global_min_loss = stats[0][0]
 
 # Define patience for early stopping. Replace "None" with the patience value.
 patience = 5
 curr_count_to_patience = 0
 
 epoch = start_epoch
+time0 = time.time()
 while curr_count_to_patience < patience:
+    print(f"Epoch Number: {epoch + 1}\nTime taken so far: {(time.time() - time0) / 3600} hours\n")
     # Train model
     train_epoch(tr_loader, model, criterion, optimizer, device)
 
