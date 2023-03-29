@@ -83,6 +83,7 @@ learning_rate = 2e-5
 
 # Create optimizer and set learning rate
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+criterion = torch.nn.MSELoss()
 
 print("Training has started")
 
@@ -100,41 +101,42 @@ while curr_patience < patience:
     timeTaken = time.time() - start
     print(f'Epoch {epoch + 1}. Time is {timeTaken:.4f}')
     model.train()
-    total_loss = 0
+    train_loss = 0
     for step, batch in enumerate(train_dataloader):
         batch = tuple(t.to(device) for t in batch)
         input_ids, attention_mask, labels = batch
         optimizer.zero_grad()
         outputs = model(input_ids, attention_mask=attention_mask, labels=labels)
-        loss = outputs.loss
-        total_loss += loss.item()
-        loss.backward()
+        batch_loss = criterion(outputs, labels)
+        train_loss += batch_loss.item()
+        batch_loss.backward()
         optimizer.step()
-    avg_loss = total_loss / len(train_dataloader)
-    print(f'Average training loss: {avg_loss}')
-    model_save_name = "model_epoch_" + f"{epoch + 1}"
-    torch.save(model.state_dict(), model_save_name)
+    train_loss /= len(train_dataloader)
+    print(f'Training loss: {train_loss:.4f}')
+    
 
     # Evaluate model on testing set
     model.eval()
-    total_loss_test = 0
     with torch.no_grad():
+        val_loss = 0
         for step, batch in enumerate(test_dataloader):
             batch = tuple(t.to(device) for t in batch)
             input_ids, attention_mask, labels = batch
             outputs = model(input_ids, attention_mask=attention_mask, labels=labels)
-            loss = outputs.loss
-            total_loss_test += loss.item()
+            batch_loss = criterion(outputs, labels)
+            val_loss += batch_loss.item()
+        val_loss /= len(test_dataloader)
+        print(f'Validation loss: {val_loss:.4f}')
+        
 
-    avg_loss_test = total_loss_test / len(test_dataloader)
-    print(f'Average validation loss: {avg_loss_test}')
+    training_loss.append(train_loss)
+    validation_loss.append(val_loss)
 
-    training_loss.append(avg_loss)
-    validation_loss.append(avg_loss_test)
-
-    if avg_loss_test < global_min_loss:
-        global_min_loss = avg_loss_test
+    if val_loss < global_min_loss:
+        global_min_loss = val_loss
         curr_patience = 0
+        model_save_name = "model_epoch_" + f"{epoch + 1}"
+        torch.save(model.state_dict(), model_save_name)
     else:
         curr_patience += 1
 
