@@ -231,4 +231,3 @@ def train_epoch(data_loader, model, criterion, optimizer, device):
         loss.backward()
         clip_grad_norm(model.parameters(), 2)
         optimizer.step()
-
