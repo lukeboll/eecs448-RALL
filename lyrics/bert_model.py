@@ -130,7 +130,7 @@ print("Number of float-valued parameters:", count_parameters(model))
 # Training Loop with Validation
 # Attempts to restore the latest checkpoint if exists
 print("Loading cnn...")
-model, start_epoch, stats = restore_checkpoint(model, config("target.checkpoint"))
+model, start_epoch, stats = restore_checkpoint(model, "./checkpoints/target/")
 
 axes = utils.make_training_plot()
 
@@ -159,7 +159,7 @@ while curr_count_to_patience < patience:
     )
 
     # Save model parameters
-    save_checkpoint(model, epoch + 1, config("target.checkpoint"), stats)
+    save_checkpoint(model, epoch + 1, "./checkpoints/target/", stats)
 
     # update early stopping parameters
     curr_count_to_patience, global_min_loss = early_stopping(
@@ -175,7 +175,7 @@ utils.save_cnn_training_plot()
 utils.hold_training_plot()
 
 print("Loading cnn...")
-model, start_epoch, stats = restore_checkpoint(model, config("target.checkpoint"))
+model, start_epoch, stats = restore_checkpoint(model, "./checkpoints/target/")
 
 axes = utils.make_training_plot()
 

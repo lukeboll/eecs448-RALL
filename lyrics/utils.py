@@ -15,7 +15,7 @@ def config(attr):
     config file on first call.
     """
     if not hasattr(config, "config"):
-        with open("config.json") as f:
+        with open("drive/MyDrive/modules_for_bert/config.json") as f:
             config.config = eval(f.read())
     node = config.config
     for part in attr.split("."):

@@ -224,7 +224,7 @@ def train_epoch(data_loader, model, criterion, optimizer, device):
 
         y_pred = model(batch_inputs, batch_masks)
 
-        loss = criterion(y_pred.squeeze(), batch_labels.squeeze())
+        loss = criterion(y_pred.squeeze().float(), batch_labels.squeeze().float())
 
         # backward pass
         loss = loss.float() 
