@@ -90,26 +90,33 @@ va_loader = create_dataloaders(val_inputs, val_masks,
 te_loader = create_dataloaders(test_inputs, test_masks, 
                                      test_labels, batch_size)
 
+
+
 # Create the architecture and instance of the model
 class BertRegressor(nn.Module):
     
-    def __init__(self, drop_rate=0.2, freeze_camembert=False):
+    def __init__(self, drop_rate=0.2, freeze_bert=False):
         super(BertRegressor, self).__init__()
         D_in, D_out = 768, 1
         
         self.bert = \
                    BertModel.from_pretrained("bert-base-uncased")
+
+        if freeze_bert:
+            for param in self.bert.parameters():
+                param.requires_grad = False
         self.regressor = nn.Sequential(
             nn.Dropout(drop_rate),
             nn.Linear(D_in, D_out))
         
     def forward(self, input_ids, attention_masks):
-        outputs = self.bert(input_ids, attention_masks)
+        with torch.no_grad():
+            outputs = self.bert(input_ids, attention_masks)
         class_label_output = outputs[1]
         outputs = self.regressor(class_label_output)
         return outputs
-    
-model = BertRegressor(drop_rate=0.2)
+
+model = BertRegressor(drop_rate=0.2, freeze_bert=True)
 
 if torch.cuda.is_available():       
     device = torch.device("cuda")

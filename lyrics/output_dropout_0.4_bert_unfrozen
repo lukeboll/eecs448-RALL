@@ -1,0 +1,61 @@
+Epoch 1
+	Validation Loss:0.9906
+	Validation R2 Score:-14.2124
+	Train Loss:0.9974
+	Train R2 Score:-0.0445
+Epoch Number: 2
+Time taken so far: 0.13323386232058207 hours
+
+Epoch 2
+	Validation Loss:0.9774
+	Validation R2 Score:-2.3642
+	Train Loss:0.9404
+	Train R2 Score:0.0252
+Epoch Number: 3
+Time taken so far: 0.26618146141370136 hours
+
+Epoch 3
+	Validation Loss:0.9657
+	Validation R2 Score:-0.5024
+	Train Loss:0.7772
+	Train R2 Score:0.1955
+Epoch Number: 4
+Time taken so far: 0.39914909031656054 hours
+
+Epoch 4
+	Validation Loss:1.0985
+	Validation R2 Score:-0.1827
+	Train Loss:0.5083
+	Train R2 Score:0.4696
+Epoch Number: 5
+Time taken so far: 0.532146409286393 hours
+
+Epoch 5
+	Validation Loss:1.2415
+	Validation R2 Score:-0.3443
+	Train Loss:0.3946
+	Train R2 Score:0.5861
+Epoch Number: 6
+Time taken so far: 0.6650784204403559 hours
+
+Epoch 6
+	Validation Loss:1.1752
+	Validation R2 Score:-0.2811
+	Train Loss:0.2752
+	Train R2 Score:0.7067
+Epoch Number: 7
+Time taken so far: 0.7981046195162668 hours
+
+Epoch 7
+	Validation Loss:1.1962
+	Validation R2 Score:-0.3785
+	Train Loss:0.2608
+	Train R2 Score:0.7273
+Epoch Number: 8
+Time taken so far: 0.9310171260436376 hours
+
+Epoch 8
+	Validation Loss:1.2389
+	Validation R2 Score:-0.3169
+	Train Loss:0.2706
+	Train R2 Score:0.7146
