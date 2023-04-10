@@ -38,28 +38,35 @@ def pre_process_data(new_df, nltk_stopwords):
     new_df.reset_index(drop=True, inplace=True)
     return new_df
 
-def get_bert_features(texts, tokenizer, model):
+def get_bert_features(sentences, tokenizer, model, max_len=512):
     input_ids = []
     attention_masks = []
     features = []
-    for text in tqdm(texts):
+
+    for sent in sentences:
         encoded_dict = tokenizer.encode_plus(
-                            text,                      # text to encode
-                            add_special_tokens = True, # add [CLS] and [SEP] tokens
-                            max_length = 512,          # truncate long texts to 512 tokens
-                            pad_to_max_length = True,  # pad shorter texts with zeros
-                            return_attention_mask = True,   # return attention masks
-                            return_tensors = 'pt'       # return PyTorch tensors
+                            sent,
+                            add_special_tokens = True, 
+                            max_length = max_len,
+                            padding='max_length',
+                            return_attention_mask = True,
+                            return_tensors = 'pt'
                        )
+            
         input_ids.append(encoded_dict['input_ids'])
         attention_masks.append(encoded_dict['attention_mask'])
-        with torch.no_grad():
-            outputs = model(encoded_dict['input_ids'], encoded_dict['attention_mask'])
-        hidden_states = outputs[2]
-        token_vecs = hidden_states[-2][0]
-        pooled_vecs = torch.mean(hidden_states[-2], dim=1)
-        sentence_embedding = torch.cat((token_vecs, pooled_vecs), dim=1)
-        features.append(sentence_embedding.numpy())
+
+    # Convert the lists to tensors
+    input_ids = torch.cat(input_ids, dim=0)
+    attention_masks = torch.cat(attention_masks, dim=0)
+
+    # Run the model on the input tensors to obtain the features
+    with torch.no_grad():
+        last_hidden_states = model(input_ids, attention_mask=attention_masks)
+        
+    # We only want the hidden states corresponding to the [CLS] token
+    features = last_hidden_states[0][:,0,:].numpy()
+
     return input_ids, attention_masks, features
 
 if __name__ == "__main__":
