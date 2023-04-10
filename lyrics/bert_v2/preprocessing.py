@@ -38,34 +38,33 @@ def pre_process_data(new_df, nltk_stopwords):
     new_df.reset_index(drop=True, inplace=True)
     return new_df
 
-def get_bert_features(sentences, tokenizer, model, max_len=512):
+def get_bert_features(texts, tokenizer, model, max_len=512):
     input_ids = []
     attention_masks = []
     features = []
-
-    for sent in sentences:
+    
+    for text in texts:
         encoded_dict = tokenizer.encode_plus(
-                            sent,
+                            text,                     
                             add_special_tokens = True, 
-                            max_length = max_len,
+                            max_length = max_len,      
                             padding='max_length',
+                            truncation=True,
                             return_attention_mask = True,
-                            return_tensors = 'pt'
-                       )
-            
+                            return_tensors = 'pt',
+                            )
+        
         input_ids.append(encoded_dict['input_ids'])
         attention_masks.append(encoded_dict['attention_mask'])
 
-    # Convert the lists to tensors
-    input_ids = torch.cat(input_ids, dim=0)
-    attention_masks = torch.cat(attention_masks, dim=0)
+    input_ids = torch.stack(input_ids)
+    attention_masks = torch.stack(attention_masks)
 
-    # Run the model on the input tensors to obtain the features
     with torch.no_grad():
-        last_hidden_states = model(input_ids, attention_mask=attention_masks)
-        
-    # We only want the hidden states corresponding to the [CLS] token
-    features = last_hidden_states[0][:,0,:].numpy()
+        model_output = model(input_ids, attention_mask=attention_masks)
+    
+    last_hidden_states = model_output[0]
+    features = last_hidden_states[:,0,:].numpy()
 
     return input_ids, attention_masks, features
 
