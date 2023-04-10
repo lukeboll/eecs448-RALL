@@ -4,20 +4,13 @@ import nltk
 from nltk.corpus import stopwords
 import langdetect
 import numpy as np
-import re
+from tqdm import tqdm
+import torch
+from transformers import BertTokenizer, BertModel
 
 
 nltk.download('stopwords')
 nltk_stopwords = set(stopwords.words('english'))
-
-# Remove the URLS
-def filter_websites(text):
-    pattern = r'(http\:\/\/|https\:\/\/)?([a-z0-9][a-z0-9\-]*\.)+[a-z][a-z\-]*'
-    text = re.sub(pattern, '', text)
-    if text.strip() == '':
-        return np.nan
-    else:
-        return text
 
 # Function to clean and process the sentence
 def pre_process_sentence(sentence, nltk_stopwords):
@@ -40,12 +33,34 @@ def is_english(text):
 # Function to clean and process the dataframe
 def pre_process_data(new_df, nltk_stopwords):
     new_df.dropna(subset=['text'], inplace=True)  # drop rows with missing values in the 'text' column
-    new_df.text = new_df.text.map(lambda x: filter_websites(x))
-    new_df.dropna(subset=['text'], inplace=True)  # drop rows with missing values in the 'text' column
     new_df = new_df[new_df['text'].apply(is_english)]
     new_df.text = new_df.text.map(lambda x: pre_process_sentence(x, nltk_stopwords))
     new_df.reset_index(drop=True, inplace=True)
     return new_df
+
+def get_bert_features(texts, tokenizer, model):
+    input_ids = []
+    attention_masks = []
+    features = []
+    for text in tqdm(texts):
+        encoded_dict = tokenizer.encode_plus(
+                            text,                      # text to encode
+                            add_special_tokens = True, # add [CLS] and [SEP] tokens
+                            max_length = 512,          # truncate long texts to 512 tokens
+                            pad_to_max_length = True,  # pad shorter texts with zeros
+                            return_attention_mask = True,   # return attention masks
+                            return_tensors = 'pt'       # return PyTorch tensors
+                       )
+        input_ids.append(encoded_dict['input_ids'])
+        attention_masks.append(encoded_dict['attention_mask'])
+        with torch.no_grad():
+            outputs = model(encoded_dict['input_ids'], encoded_dict['attention_mask'])
+        hidden_states = outputs[2]
+        token_vecs = hidden_states[-2][0]
+        pooled_vecs = torch.mean(hidden_states[-2], dim=1)
+        sentence_embedding = torch.cat((token_vecs, pooled_vecs), dim=1)
+        features.append(sentence_embedding.numpy())
+    return input_ids, attention_masks, features
 
 if __name__ == "__main__":
     # Load data from CSV file
@@ -65,11 +80,17 @@ if __name__ == "__main__":
     # Preprocess the dataframe
     df = pre_process_data(df, nltk_stopwords)
 
-    # TODO: Use BERT for feature extraction
-    df = None
+    # Use BERT for feature extraction
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    model = BertModel.from_pretrained('bert-base-uncased', output_hidden_states=True)
+    input_ids, attention_masks, features = get_bert_features(df['text'], tokenizer, model)
+    df['features'] = list(features)
+
+    # Drop columns
+    df.drop(columns=['text', 'features', 'input_ids', 'attention_mask'], inplace=True)
 
     # Save the datasets to their respective genres
     for genre in genres_to_keep:
         df_filtered = df[df['genre'] == genre].reset_index(drop=True)
-        # TODO: Remove the genre column from df_filtered
+        df_filtered = df_filtered.drop('genre', axis=1)
         df_filtered.to_csv(f"{genre}/processed_spotify_data.csv", index=False)
