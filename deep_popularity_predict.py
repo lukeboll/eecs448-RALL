@@ -89,7 +89,7 @@ print(f'Test MAE (POP): {test_mae_pop:.2f}')
 print(f'Test MAE (INDIE): {test_mae_indie:.2f}')
 print(f'Test MAE (SOUL): {test_mae_soul:.2f}')
 print(f'Test MAE (FOLK): {test_mae_folk:.2f}')
-
+print(test_loss_rock, test_mae_rock)
 # Make predictions
 # predictions = model.predict(X_test_rock)
 
